@@ -1,0 +1,68 @@
+services:
+  # ──────────────────────────────────────────────────────────────
+  # PostgreSQL Database (Production Tuned)
+  # ──────────────────────────────────────────────────────────────
+  db:
+    image: postgres:15-alpine
+    container_name: courier_db_prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-courier}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-courier123}
+      POSTGRES_DB: ${POSTGRES_DB:-courier_logistics}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata_prod:/var/lib/postgresql/data
+      - ./database/migrations/001_create_enums.sql:/docker-entrypoint-initdb.d/01_enums.sql
+      - ./database/migrations/002_create_tables.sql:/docker-entrypoint-initdb.d/02_tables.sql
+      - ./database/migrations/003_create_indexes.sql:/docker-entrypoint-initdb.d/03_indexes.sql
+      - ./database/migrations/004_create_triggers.sql:/docker-entrypoint-initdb.d/04_triggers.sql
+      - ./database/migrations/005_seed_data.sql:/docker-entrypoint-initdb.d/05_seed.sql
+      - ./database/migrations/006_multi_tenant_aggregator.sql:/docker-entrypoint-initdb.d/06_multi_tenant.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-courier} -d ${POSTGRES_DB:-courier_logistics}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ──────────────────────────────────────────────────────────────
+  # FastAPI Backend Service (Production)
+  # ──────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: courier_api_prod
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-courier}:${POSTGRES_PASSWORD:-courier123}@db:5432/${POSTGRES_DB:-courier_logistics}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-super-secret-key-change-in-production}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      JWT_EXPIRATION_MINUTES: ${JWT_EXPIRATION_MINUTES:-480}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost,http://localhost:80,http://localhost:5173,http://localhost:5174,http://localhost:5175}
+      ENVIRONMENT: production
+    depends_on:
+      db:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+
+  # ──────────────────────────────────────────────────────────────
+  # Nginx Production Frontend
+  # ──────────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    container_name: courier_frontend_prod
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      api:
+        condition: service_started
+
+volumes:
+  pgdata_prod:

@@ -1,0 +1,42 @@
+======================================================================
+MULTI-TENANT SHIPPING AGGREGATOR & LOGISTICS SAAS PLATFORM
+======================================================================
+
+MULTI-PORTAL ENTRY POINTS:
+- Port 5173: Public Tracking & Customer Portal     http://localhost:5173
+- Port 5174: Courier Partner ERP & Operations Hub  http://localhost:5174
+- Port 5175: Seller & E-Commerce Aggregator Portal http://localhost:5175
+- FastAPI Backend & Swagger API Docs               http://localhost:8000/docs
+- API Health Check Endpoint                        http://localhost:8000/api/health
+- PostgreSQL Database                              localhost:5432 (courier / courier123)
+
+DEMO CREDENTIALS:
+1. Super Root Admin (Dispute Arbitration & Cross-Tenant Platform Owner):
+   super.admin@courier.com / password123 (Login on Port 5174)
+
+2. Courier Partner Admins & Operations Staff (Port 5174):
+   - DTDC Courier Admin:         rajesh.kumar@courier.com / password123
+   - Blue Dart Aviation Admin:   bluedart.admin@courier.com / password123
+   - Delhivery Network Admin:    delhivery.admin@courier.com / password123
+   - FedEx Express Admin:        fedex.admin@courier.com / password123
+   - Last-Mile Courier Staff:    vikram.singh@courier.com / password123 (Out-for-delivery runs)
+   - Linehaul Fleet Driver:      mohammed.ali@courier.com / password123 (Dispatched shipments)
+   - Sorting Warehouse Staff:    kavita.patel@courier.com / password123 (Staged hub inventory)
+
+3. E-Commerce Sellers / Merchants (Port 5175):
+   - Amazon India Seller Services: ops-fulfillment@amazon.in / password123
+   - Flipkart Internet Pvt Ltd:    ekart-merchant@flipkart.com / password123
+   - Meesho Supply Chain Services: seller-ops@meesho.com / password123
+   - Myntra Fashion Marketplace:   merchant-hub@myntra.com / password123
+
+++++++++++++++++++++++++
+DOCKER COMMAND PROTOCOL
+++++++++++++++++++++++++
+
+# Run via WSL Ubuntu:
+wsl -d Ubuntu -- sh -c 'cd /mnt/e/DSD_Project && docker compose up -d'
+wsl -d Ubuntu -- sh -c 'cd /mnt/e/DSD_Project && docker compose ps'
+wsl -d Ubuntu -- sh -c 'cd /mnt/e/DSD_Project && docker compose stop'
+
+# Run Automated Verification Suite (16/16 Tests):
+powershell.exe -ExecutionPolicy Bypass -File e:\DSD_Project\backend\app\run_tests.ps1

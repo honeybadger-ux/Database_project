@@ -1,0 +1,78 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased selection:bg-blue-600/20 selection:text-blue-900;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* Form input base styling consistency */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="date"],
+  select,
+  textarea {
+    @apply transition-all duration-150 ease-out;
+  }
+}
+
+@layer components {
+  /* Surface and Card Patterns */
+  .surface-card {
+    @apply bg-white rounded-2xl border border-slate-200/80 shadow-xs transition-all duration-200;
+  }
+
+  .surface-card-hover {
+    @apply bg-white rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-card-hover hover:border-slate-300 transition-all duration-200;
+  }
+
+  .glass-panel {
+    @apply bg-white/85 backdrop-blur-md border border-slate-200/80 shadow-xs;
+  }
+
+  .glass-header {
+    @apply bg-white/90 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-30;
+  }
+
+  /* Table styling utilities */
+  .table-header-cell {
+    @apply px-4 py-3.5 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider bg-slate-50/80 border-b border-slate-200/80;
+  }
+
+  .table-body-cell {
+    @apply px-4 py-4 text-sm text-slate-700 border-b border-slate-100;
+  }
+
+  /* Timeline Stepper Component */
+  .timeline-container {
+    @apply relative pl-8;
+  }
+
+  .timeline-line {
+    @apply absolute left-[15px] top-3 bottom-3 w-[2px] bg-slate-200 rounded-full;
+  }
+
+  .timeline-dot {
+    @apply absolute left-[7px] top-1.5 w-4 h-4 rounded-full border-2 border-white shadow-xs z-10;
+  }
+}
+
+/* Polished Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

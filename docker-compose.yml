@@ -1,0 +1,124 @@
+services:
+  # ──────────────────────────────────────────────────────────────
+  # PostgreSQL Database
+  # ──────────────────────────────────────────────────────────────
+  db:
+    image: postgres:15-alpine
+    container_name: courier_db
+    environment:
+      POSTGRES_USER: courier
+      POSTGRES_PASSWORD: courier123
+      POSTGRES_DB: courier_logistics
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./database/migrations/001_create_enums.sql:/docker-entrypoint-initdb.d/01_enums.sql
+      - ./database/migrations/002_create_tables.sql:/docker-entrypoint-initdb.d/02_tables.sql
+      - ./database/migrations/003_create_indexes.sql:/docker-entrypoint-initdb.d/03_indexes.sql
+      - ./database/migrations/004_create_triggers.sql:/docker-entrypoint-initdb.d/04_triggers.sql
+      - ./database/migrations/005_seed_data.sql:/docker-entrypoint-initdb.d/05_seed.sql
+      - ./database/migrations/006_multi_tenant_aggregator.sql:/docker-entrypoint-initdb.d/06_multi_tenant.sql
+      - ./database/migrations/007_pincode_serviceability.sql:/docker-entrypoint-initdb.d/07_pincode.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U courier -d courier_logistics"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ──────────────────────────────────────────────────────────────
+  # FastAPI Backend
+  # ──────────────────────────────────────────────────────────────
+  api:
+    image: courier_api:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: courier_api
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://courier:courier123@db:5432/courier_logistics
+      JWT_SECRET_KEY: super-secret-key-change-in-production
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend/app:/app/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # ──────────────────────────────────────────────────────────────
+  # React Frontends: Multi-Port / Multi-Portal Architecture
+  # ──────────────────────────────────────────────────────────────
+
+  # Port 5173 — Public & Customer Tracking Portal + Super Admin Console
+  frontend_tracking:
+    image: courier_frontend:latest
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: courier_frontend_tracking
+    ports:
+      - "5173:5173"
+    environment:
+      PORT: 5173
+      VITE_API_URL: http://localhost:8000
+      VITE_BACKEND_URL: http://api:8000
+    depends_on:
+      - api
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/index.html:/app/index.html
+      - ./frontend/vite.config.js:/app/vite.config.js
+      - ./frontend/tailwind.config.js:/app/tailwind.config.js
+      - ./frontend/postcss.config.js:/app/postcss.config.js
+    command: npm run dev -- --host 0.0.0.0 --port 5173 --force
+
+  # Port 5174 — Courier Partner & Staff ERP Portal
+  frontend_courier_erp:
+    image: courier_frontend:latest
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: courier_frontend_erp
+    ports:
+      - "5174:5174"
+    environment:
+      PORT: 5174
+      VITE_API_URL: http://localhost:8000
+      VITE_BACKEND_URL: http://api:8000
+    depends_on:
+      - api
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/index.html:/app/index.html
+      - ./frontend/vite.config.js:/app/vite.config.js
+      - ./frontend/tailwind.config.js:/app/tailwind.config.js
+      - ./frontend/postcss.config.js:/app/postcss.config.js
+    command: npm run dev -- --host 0.0.0.0 --port 5174 --force
+
+  # Port 5175 — Seller / Aggregator Portal (Rate Calculator & 1-Click Booking)
+  frontend_seller_portal:
+    image: courier_frontend:latest
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: courier_frontend_seller
+    ports:
+      - "5175:5175"
+    environment:
+      PORT: 5175
+      VITE_API_URL: http://localhost:8000
+      VITE_BACKEND_URL: http://api:8000
+    depends_on:
+      - api
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/index.html:/app/index.html
+      - ./frontend/vite.config.js:/app/vite.config.js
+      - ./frontend/tailwind.config.js:/app/tailwind.config.js
+      - ./frontend/postcss.config.js:/app/postcss.config.js
+    command: npm run dev -- --host 0.0.0.0 --port 5175 --force
+
+volumes:
+  pgdata:
